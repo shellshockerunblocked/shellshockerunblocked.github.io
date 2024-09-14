@@ -6,8 +6,4 @@ Disallow: /admin/
 Disallow: /cgi-bin/
 Disallow: /wp-admin/
 
-# Block non-HTML files or specific scripts (example)
-Disallow: /scripts/
-Disallow: /private/
-
 Sitemap: https://1v1-unblocked.github.io/sitemap.xml
