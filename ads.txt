@@ -1,3 +1,6 @@
+appnexus.com, 14163, RESELLER 
+monetizenow.microsoft.com, 253675185, DIRECT
+
 google.com, pub-5364851636489929, DIRECT, f08c47fec0942fa0
 yandex.com, 105422092, DIRECT
 improvedigital.com, 2031, RESELLER
