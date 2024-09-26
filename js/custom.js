@@ -36,6 +36,11 @@ function search_animal() {
   };
 })();
 
+ // Function to detect if it's a mobile device
+    function isMobileDevice() {
+        return window.matchMedia("(max-width: 767px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+    }
+
 // PWA Installation Code
 let deferredPrompt;
 
