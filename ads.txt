@@ -1,3 +1,6 @@
+google.com, pub-6237744281549548, DIRECT, f08c47fec0942fa0
+venatus.com, 66f5737449522708f0221cc8, DIRECT
+
 ownerdomain=1v1-unblocked.github.io
 managerdomain=adinplay.com
 
