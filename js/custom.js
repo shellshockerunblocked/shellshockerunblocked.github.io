@@ -1,15 +1,16 @@
-// Ensure the PWA prompt and other functionalities are initialized on every page load
+// Ensure the page is fully loaded before initializing PWA and other functionalities
 window.addEventListener('load', () => {
     registerServiceWorker();
     setupPwaInstallation();
+    setupSearchFunctionality();
     setupGoogleAnalytics();
 });
 
-// Function to register the service worker for the entire site
+// Function to register the service worker
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-            .register('/service-worker.js') // Service worker at root to cover all pages
+            .register('/service-worker.js') // Ensure the service worker is in the root directory
             .then((registration) => {
                 console.log('Service Worker registered with scope:', registration.scope);
             })
@@ -21,9 +22,14 @@ function registerServiceWorker() {
     }
 }
 
+// Function to detect if it's a mobile device
+function isMobileDevice() {
+    return window.matchMedia("(max-width: 767px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+}
+
 // Function to set up the PWA installation prompt
 function setupPwaInstallation() {
-    let deferredPrompt; // Store the beforeinstallprompt event globally
+    let deferredPrompt;
     const isPwaInstalled = localStorage.getItem('pwaInstalled');
 
     if (!isPwaInstalled) {
@@ -44,10 +50,10 @@ function setupPwaInstallation() {
         const installButton = document.getElementById('install-button');
         const closePopupButton = document.getElementById('close-popup');
 
-        // Listen for the beforeinstallprompt event on every page
+        // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); // Prevent the default prompt
-            deferredPrompt = e; // Save the event for later use
+            e.preventDefault();
+            deferredPrompt = e;
             popup.style.display = 'flex'; // Show the popup
             console.log('beforeinstallprompt event triggered');
         });
@@ -56,7 +62,6 @@ function setupPwaInstallation() {
         installButton.addEventListener('click', () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt(); // Show the install prompt
-
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
                         console.log('User accepted the PWA installation.');
@@ -65,29 +70,45 @@ function setupPwaInstallation() {
                         console.log('User dismissed the PWA installation.');
                     }
                     deferredPrompt = null;
-                    popup.style.display = 'none'; // Hide the popup
+                    popup.style.display = 'none';
                 });
             }
         });
 
         // Close the popup
         closePopupButton.addEventListener('click', () => {
-            popup.style.display = 'none'; // Hide the popup
+            popup.style.display = 'none';
             console.log('PWA popup closed.');
         });
 
-        // Listen for the appinstalled event to track successful installations
+        // Listen for the appinstalled event
         window.addEventListener('appinstalled', () => {
             console.log('PWA installed successfully.');
-            localStorage.setItem('pwaInstalled', 'true'); // Mark as installed
+            localStorage.setItem('pwaInstalled', 'true');
             popup.style.display = 'none';
         });
     } else {
-        console.log('PWA is already installed.');
+        console.log('PWA is already installed or unavailable.');
     }
 }
 
-// Function to set up Google Analytics tracking
+// Function to set up search functionality
+function setupSearchFunctionality() {
+    const searchInput = document.getElementById("searchbar");
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const input = searchInput.value.toLowerCase();
+            const items = document.getElementsByClassName("animals");
+
+            Array.from(items).forEach((item) => {
+                item.style.display = item.innerHTML.toLowerCase().includes(input) ? "block" : "none";
+            });
+        });
+        console.log('Search functionality set up.');
+    }
+}
+
+// Function to set up Google Analytics
 function setupGoogleAnalytics() {
     const script = document.createElement('script');
     script.async = true;
