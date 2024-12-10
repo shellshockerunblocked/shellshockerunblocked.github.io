@@ -1,100 +1,125 @@
-// Wait for the site to fully load
-window.addEventListener("load", () => {
-    console.log("Site fully loaded.");
+// Ensure the page is fully loaded before initializing PWA and other functionalities
+window.addEventListener('load', () => {
+    registerServiceWorker();
+    setupPwaInstallation();
+    setupSearchFunctionality();
+    setupGoogleAnalytics();
+});
 
-    // Google Analytics code
-    (function () {
-        const script = document.createElement("script");
-        script.async = true;
-        script.src = "https://www.googletagmanager.com/gtag/js?id=G-5R231DMLB7";
-        document.head.appendChild(script);
+// Function to register the service worker
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker
+            .register('/service-worker.js') // Ensure the service worker is in the root directory
+            .then((registration) => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('Service Worker registration failed:', error);
+            });
+    } else {
+        console.warn('Service Worker is not supported in this browser.');
+    }
+}
 
-        script.onload = function () {
-            window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
-            gtag("js", new Date());
-            gtag("config", "G-5R231DMLB7");
-        };
-    })();
+// Function to detect if it's a mobile device
+function isMobileDevice() {
+    return window.matchMedia("(max-width: 767px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+}
 
-    // PWA Installation Code
+// Function to set up the PWA installation prompt
+function setupPwaInstallation() {
     let deferredPrompt;
-
-    // Check if the PWA is already installed
-    const isPwaInstalled = localStorage.getItem("pwaInstalled");
+    const isPwaInstalled = localStorage.getItem('pwaInstalled');
 
     if (!isPwaInstalled) {
-        // Create and append the popup HTML
+        // Add the PWA installation popup HTML
         const popupHTML = `
-            <div id="pwa-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); color: #333; text-align: center; z-index: 1000; display: flex; align-items: center; justify-content: center;">
-                <div style="padding: 25px; background: #f5f5f5; border-radius: 20px; width: 90%; max-width: 450px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); text-align: center;">
-                    <h2 style="font-size: 22px; margin-bottom: 15px; color: #2c3e50;">Hey there! 👋</h2>
-                    <p style="font-size: 16px; color: #444; margin-bottom: 25px; font-weight: bold;">Don't Miss Out - Install Our Desktop App!</p>
-                    <button id="install-button" style="padding: 12px 28px; font-size: 18px; cursor: pointer; background: #26616a; color: white; border: none; border-radius: 30px;">Add to Home Screen</button>
-                    <button id="close-popup" style="padding: 12px 28px; font-size: 18px; cursor: pointer; background-color: transparent; color: #888; border: none; border-radius: 30px;">Not Now</button>
+            <div id="pwa-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); color: #333; z-index: 1000; display: flex; align-items: center; justify-content: center;">
+                <div style="padding: 20px; background: #f5f5f5; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); text-align: center;">
+                    <h2 style="font-size: 20px; margin-bottom: 10px;">Install Our App!</h2>
+                    <p style="font-size: 16px; margin-bottom: 20px;">Enjoy faster access and a seamless experience.</p>
+                    <button id="install-button" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px;">Add to Home Screen</button>
+                    <button id="close-popup" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: transparent; color: #888; border: none; margin-top: 10px;">Not Now</button>
                 </div>
             </div>
         `;
-        document.body.insertAdjacentHTML("beforeend", popupHTML);
+        document.body.insertAdjacentHTML('beforeend', popupHTML);
 
-        const popup = document.getElementById("pwa-popup");
-        const installButton = document.getElementById("install-button");
-        const closePopupButton = document.getElementById("close-popup");
+        const popup = document.getElementById('pwa-popup');
+        const installButton = document.getElementById('install-button');
+        const closePopupButton = document.getElementById('close-popup');
 
-        // Listen for the 'beforeinstallprompt' event
-        window.addEventListener("beforeinstallprompt", (e) => {
-            e.preventDefault(); // Prevent the default prompt
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
             deferredPrompt = e;
-            popup.style.display = "flex"; // Show the popup
-
-            // Track that the install prompt was shown
-            gtag("event", "PWA Install Prompt", {
-                event_category: "PWA",
-                event_label: "Install Prompt Shown",
-            });
+            popup.style.display = 'flex'; // Show the popup
+            console.log('beforeinstallprompt event triggered');
         });
 
-        // Handle the install button click
-        installButton.addEventListener("click", () => {
+        // Handle install button click
+        installButton.addEventListener('click', () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt(); // Show the install prompt
                 deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === "accepted") {
-                        console.log("User accepted the A2HS prompt");
-                        // Track acceptance
-                        gtag("event", "PWA Install Accepted", {
-                            event_category: "PWA",
-                            event_label: "Install Accepted",
-                        });
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the PWA installation.');
+                        localStorage.setItem('pwaInstalled', 'true');
                     } else {
-                        console.log("User dismissed the A2HS prompt");
-                        // Track dismissal
-                        gtag("event", "PWA Install Dismissed", {
-                            event_category: "PWA",
-                            event_label: "Install Dismissed",
-                        });
+                        console.log('User dismissed the PWA installation.');
                     }
                     deferredPrompt = null;
-                    popup.style.display = "none"; // Hide the popup
+                    popup.style.display = 'none';
                 });
             }
         });
 
-        // Handle the close popup button click
-        closePopupButton.addEventListener("click", () => {
-            popup.style.display = "none"; // Hide the popup
+        // Close the popup
+        closePopupButton.addEventListener('click', () => {
+            popup.style.display = 'none';
+            console.log('PWA popup closed.');
         });
 
-        // Listen for the 'appinstalled' event
-        window.addEventListener("appinstalled", () => {
-            console.log("PWA was installed");
-            localStorage.setItem("pwaInstalled", "true"); // Save the flag in localStorage
-            popup.style.display = "none"; // Hide the popup
-            // Track the PWA installation
-            gtag("event", "PWA Installed", {
-                event_category: "PWA",
-                event_label: "PWA Installed",
+        // Listen for the appinstalled event
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed successfully.');
+            localStorage.setItem('pwaInstalled', 'true');
+            popup.style.display = 'none';
+        });
+    } else {
+        console.log('PWA is already installed or unavailable.');
+    }
+}
+
+// Function to set up search functionality
+function setupSearchFunctionality() {
+    const searchInput = document.getElementById("searchbar");
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const input = searchInput.value.toLowerCase();
+            const items = document.getElementsByClassName("animals");
+
+            Array.from(items).forEach((item) => {
+                item.style.display = item.innerHTML.toLowerCase().includes(input) ? "block" : "none";
             });
         });
+        console.log('Search functionality set up.');
     }
-});
+}
+
+// Function to set up Google Analytics
+function setupGoogleAnalytics() {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-5R231DMLB7';
+    document.head.appendChild(script);
+
+    script.onload = () => {
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-5R231DMLB7');
+        console.log('Google Analytics initialized.');
+    };
+}
